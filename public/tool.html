@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>KI-Feedback-Coach · Tool</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="min-h-screen bg-gradient-to-b from-zinc-950 via-zinc-950 to-zinc-900 text-zinc-100">
+  <div class="max-w-5xl mx-auto px-4 py-10">
+    <header class="flex items-start justify-between gap-6">
+      <div>
+        <h1 class="text-3xl md:text-4xl font-semibold tracking-tight">KI-Feedback-Coach</h1>
+        <p class="mt-2 text-zinc-300 max-w-2xl">
+          Upload oder Text einfügen → Feedback + Score + Grammatik & Rechtschreibung.
+        </p>
+        <a href="/" class="inline-block mt-3 text-sm text-zinc-400 hover:text-zinc-200 transition">← Zur Startseite</a>
+      </div>
+
+      <div class="hidden md:flex items-center gap-2 rounded-2xl bg-zinc-900/60 border border-zinc-800 px-4 py-2">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
+        <span class="text-sm text-zinc-300">Lokal</span>
+      </div>
+    </header>
+
+    <main class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Input -->
+      <section class="rounded-3xl bg-zinc-900/60 border border-zinc-800 p-5 shadow-lg">
+        <div class="flex flex-wrap gap-3 items-center justify-between">
+          <div class="flex flex-wrap gap-3">
+            <div>
+              <label class="block text-sm text-zinc-300 mb-1">Textart</label>
+              <select id="textType" class="bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-sm">
+                <option>Essay</option>
+                <option>Comment</option>
+                <option>Analysis</option>
+                <option>Erörterung</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm text-zinc-300 mb-1">Niveau</label>
+              <select id="level" class="bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-sm">
+                <option>EF</option>
+                <option selected>Q1</option>
+                <option>Q2</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm text-zinc-300 mb-1">Sprache</label>
+              <select id="lang" class="bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-sm">
+                <option value="de" selected>Deutsch</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+          </div>
+
+          <button id="btn"
+            class="rounded-2xl px-4 py-2 bg-emerald-500 text-zinc-950 font-medium hover:bg-emerald-400 transition disabled:opacity-60 disabled:cursor-not-allowed">
+            Feedback erstellen
+          </button>
+        </div>
+
+        <!-- Dropzone -->
+        <div class="mt-4">
+          <label class="block text-sm text-zinc-300 mb-2">Upload (Drag & Drop)</label>
+
+          <div id="dropzone"
+               class="rounded-2xl border border-zinc-800 bg-zinc-950/40 p-4 text-zinc-300 hover:border-emerald-500/60 transition cursor-pointer">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <p class="font-medium">Datei hier ablegen</p>
+                <p class="text-xs text-zinc-500 mt-1">.txt · .pdf · .docx · .png/.jpg/.webp</p>
+              </div>
+              <button id="pickFileBtn" type="button"
+                class="rounded-xl px-3 py-2 bg-zinc-800 hover:bg-zinc-700 transition text-sm">
+                Datei wählen
+              </button>
+            </div>
+
+            <input id="fileInput" type="file" class="hidden"
+              accept=".txt,.pdf,.docx,image/png,image/jpeg,image/webp" />
+
+            <div id="fileInfo" class="mt-3 text-sm text-zinc-200 hidden"></div>
+
+            <button id="clearFileBtn" type="button"
+              class="mt-3 hidden rounded-xl px-3 py-2 bg-zinc-800 hover:bg-zinc-700 transition text-sm">
+              Datei entfernen
+            </button>
+          </div>
+
+          <p class="mt-2 text-xs text-zinc-500">Kein Upload? Dann Text unten einfügen.</p>
+        </div>
+
+        <!-- Text -->
+        <div class="mt-4">
+          <label class="block text-sm text-zinc-300 mb-2">Dein Text</label>
+          <textarea id="text" rows="10"
+            class="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-4 text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            placeholder="Text hier einfügen (oder Datei hochladen)..."></textarea>
+        </div>
+
+        <div class="mt-4 text-xs text-zinc-400 leading-relaxed">
+          <p class="font-medium text-zinc-300">Hinweise</p>
+          <ul class="mt-1 list-disc ml-5 space-y-1">
+            <li>Score 1–10 ist nur Orientierung (keine Note).</li>
+            <li>Grammatik/Rechtschreibung: Muster/Erklärungen, keine Komplettkorrektur.</li>
+            <li>PDF-Scans enthalten oft keinen Text → ggf. Bild/OCR nutzen.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Output -->
+      <section class="rounded-3xl bg-zinc-900/60 border border-zinc-800 p-5 shadow-lg">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold">Feedback</h2>
+          <span id="status" class="text-sm text-zinc-400">bereit</span>
+        </div>
+
+        <div id="empty" class="mt-6 rounded-2xl border border-dashed border-zinc-800 p-6 text-zinc-400">
+          <p class="font-medium text-zinc-300">Noch kein Feedback.</p>
+          <p class="mt-1">Datei hochladen oder Text einfügen und <span class="text-zinc-200">„Feedback erstellen“</span> klicken.</p>
+        </div>
+
+        <div id="result" class="mt-6 space-y-5 hidden">
+          <!-- SCORE -->
+          <div class="rounded-2xl border border-zinc-800 bg-zinc-950/40 p-4">
+            <h3 class="font-semibold text-indigo-300">Gesamtbewertung</h3>
+            <div class="mt-2 flex items-center gap-4">
+              <div id="score" class="text-4xl font-bold text-indigo-400">–</div>
+              <div>
+                <p class="text-sm text-zinc-300">von 10 (keine Note)</p>
+                <p id="scoreExplanation" class="mt-1 text-sm text-zinc-200"></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- STRENGTHS -->
+          <div class="rounded-2xl border border-zinc-800 bg-zinc-950/40 p-4">
+            <h3 class="font-semibold text-emerald-300">Stärken</h3>
+            <ul id="strengths" class="mt-2 list-disc ml-5 text-zinc-200 space-y-1"></ul>
+          </div>
+
+          <!-- IMPROVEMENTS -->
+          <div class="rounded-2xl border border-zinc-800 bg-zinc-950/40 p-4">
+            <h3 class="font-semibold text-amber-300">Verbesserungen</h3>
+            <ul id="improvements" class="mt-2 list-disc ml-5 text-zinc-200 space-y-1"></ul>
+          </div>
+
+          <!-- LANGUAGE ISSUES -->
+          <div class="rounded-2xl border border-zinc-800 bg-zinc-950/40 p-4">
+            <h3 class="font-semibold text-red-300">Sprache & Rechtschreibung</h3>
+
+            <div class="mt-3">
+              <p class="text-sm font-medium text-zinc-300">Grammatik</p>
+              <ul id="grammarIssues" class="mt-1 list-disc ml-5 text-zinc-200 space-y-1"></ul>
+            </div>
+
+            <div class="mt-3">
+              <p class="text-sm font-medium text-zinc-300">Rechtschreibung</p>
+              <ul id="spellingIssues" class="mt-1 list-disc ml-5 text-zinc-200 space-y-1"></ul>
+            </div>
+          </div>
+
+          <!-- NEXT STEPS -->
+          <div class="rounded-2xl border border-zinc-800 bg-zinc-950/40 p-4">
+            <h3 class="font-semibold text-sky-300">Nächste Schritte</h3>
+            <ul id="nextSteps" class="mt-2 list-disc ml-5 text-zinc-200 space-y-1"></ul>
+          </div>
+
+          <!-- MINI EXERCISE -->
+          <div class="rounded-2xl border border-zinc-800 bg-zinc-950/40 p-4">
+            <h3 class="font-semibold text-fuchsia-300">Mini-Übung</h3>
+            <p id="miniExercise" class="mt-2 text-zinc-200"></p>
+          </div>
+
+          <button id="copyBtn"
+            class="w-full rounded-2xl px-4 py-2 bg-zinc-800 hover:bg-zinc-700 transition text-zinc-100">
+            Feedback kopieren
+          </button>
+        </div>
+
+        <p id="err" class="mt-4 text-sm text-red-300 hidden"></p>
+      </section>
+    </main>
+
+    <footer class="mt-10 text-xs text-zinc-500">
+      Projektarbeit Wirtschaftsinformatik · KI-Feedback-Coach
+    </footer>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let selectedFile = null;
+
+    function setFile(file) {
+      selectedFile = file;
+      const info = $("fileInfo");
+      const clearBtn = $("clearFileBtn");
+
+      if (!file) {
+        info.classList.add("hidden");
+        clearBtn.classList.add("hidden");
+        info.textContent = "";
+        return;
+      }
+
+      info.classList.remove("hidden");
+      clearBtn.classList.remove("hidden");
+      info.textContent = `✅ Ausgewählt: ${file.name} (${Math.round(file.size / 1024)} KB)`;
+    }
+
+    $("pickFileBtn").addEventListener("click", () => $("fileInput").click());
+    $("fileInput").addEventListener("change", (e) => {
+      const f = e.target.files?.[0];
+      if (f) setFile(f);
+    });
+
+    $("clearFileBtn").addEventListener("click", () => {
+      $("fileInput").value = "";
+      setFile(null);
+    });
+
+    const dz = $("dropzone");
+    dz.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dz.classList.add("border-emerald-500/70");
+    });
+    dz.addEventListener("dragleave", () => dz.classList.remove("border-emerald-500/70"));
+    dz.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dz.classList.remove("border-emerald-500/70");
+      const f = e.dataTransfer.files?.[0];
+      if (f) setFile(f);
+    });
+
+    function setList(el, items) {
+      el.innerHTML = "";
+      (items || []).forEach(t => {
+        const li = document.createElement("li");
+        li.textContent = t;
+        el.appendChild(li);
+      });
+    }
+
+    function showError(msg) {
+      $("err").textContent = msg;
+      $("err").classList.remove("hidden");
+    }
+    function clearError() {
+      $("err").classList.add("hidden");
+      $("err").textContent = "";
+    }
+
+    async function run() {
+      clearError();
+      $("status").textContent = "läuft…";
+      $("btn").disabled = true;
+
+      try {
+        const formData = new FormData();
+        formData.append("textType", $("textType").value);
+        formData.append("level", $("level").value);
+        formData.append("lang", $("lang").value);
+
+        if (selectedFile) formData.append("file", selectedFile);
+        else formData.append("text", $("text").value);
+
+        const res = await fetch("/api/feedback", { method: "POST", body: formData });
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.error || data.details || "Fehler");
+
+        $("empty").classList.add("hidden");
+        $("result").classList.remove("hidden");
+
+        $("score").textContent = (typeof data.score === "number") ? data.score : "–";
+        $("scoreExplanation").textContent = data.score_explanation || "";
+
+        setList($("strengths"), data.strengths);
+        setList($("improvements"), data.improvements);
+        setList($("grammarIssues"), data.language_issues?.grammar);
+        setList($("spellingIssues"), data.language_issues?.spelling);
+        setList($("nextSteps"), data.next_steps);
+        $("miniExercise").textContent = data.mini_exercise || "";
+
+        $("status").textContent = "fertig ✅";
+      } catch (e) {
+        $("status").textContent = "Fehler ❌";
+        showError(String(e.message || e));
+      } finally {
+        $("btn").disabled = false;
+      }
+    }
+
+    $("btn").addEventListener("click", run);
+
+    $("copyBtn").addEventListener("click", async () => {
+      const txt =
+`SCORE:
+${$("score").textContent}/10
+${$("scoreExplanation").textContent}
+
+STÄRKEN:
+- ${[...$("strengths").children].map(li => li.textContent).join("\n- ")}
+
+VERBESSERUNGEN:
+- ${[...$("improvements").children].map(li => li.textContent).join("\n- ")}
+
+GRAMMATIK:
+- ${[...$("grammarIssues").children].map(li => li.textContent).join("\n- ")}
+
+RECHTSCHREIBUNG:
+- ${[...$("spellingIssues").children].map(li => li.textContent).join("\n- ")}
+
+NÄCHSTE SCHRITTE:
+- ${[...$("nextSteps").children].map(li => li.textContent).join("\n- ")}
+
+MINI-ÜBUNG:
+${$("miniExercise").textContent}`;
+
+      await navigator.clipboard.writeText(txt);
+      $("status").textContent = "kopiert 📋";
+      setTimeout(() => $("status").textContent = "bereit", 1200);
+    });
+  </script>
+</body>
+</html>
