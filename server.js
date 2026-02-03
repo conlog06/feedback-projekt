@@ -39,10 +39,10 @@ app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "index.ht
 app.get("/tool", (req, res) => res.sendFile(path.join(__dirname, "public", "tool.html")));
 
 const PORT = Number(process.env.PORT || 3000);
+const IP = "0.0.0.0";
 const PROVIDER = (process.env.PROVIDER || "deepseek").toLowerCase(); // deepseek | ollama | demo
 const DEMO_MODE = (process.env.DEMO_MODE || "false").toLowerCase() === "true";
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || "";
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "mistral";
 const MAX_FILE_MB = Number(process.env.MAX_FILE_MB || 30);
 const MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024;
 
@@ -52,7 +52,6 @@ console.log("PROVIDER:", PROVIDER);
 console.log("DEMO_MODE:", DEMO_MODE);
 console.log("DEEPSEEK KEY loaded?", !!DEEPSEEK_API_KEY);
 console.log("MAX_FILE_MB:", MAX_FILE_MB);
-console.log("OLLAMA_MODEL:", OLLAMA_MODEL);
 
 // ---- Upload ----
 const upload = multer({
@@ -369,6 +368,6 @@ app.post("/api/feedback", upload.single("file"), async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ Server läuft: http://localhost:${PORT}`);
+app.listen(PORT, IP, () => {
+  console.log(`✅ Server läuft: ${IP}:${PORT}`);
 });
