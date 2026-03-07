@@ -29,6 +29,16 @@ Das Projekt ist als Übungs- und Lernprojekt entstanden.
 
 ---
 
+## Textarten
+- Aufsatz
+- Kommentar
+- Analyse
+- Erörterung
+- Zusammenfassung
+- Charakterisierung
+
+---
+
 ## Installation
 
 ```bash
