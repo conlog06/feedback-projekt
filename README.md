@@ -35,3 +35,4 @@ Das Projekt ist als Übungs- und Lernprojekt entstanden.
 git clone https://github.com/conlog06/feedback-projekt.git
 cd feedback-projekt
 npm install
+npm start
