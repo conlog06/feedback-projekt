@@ -43,6 +43,7 @@ const IP = "0.0.0.0";
 const PROVIDER = (process.env.PROVIDER || "deepseek").toLowerCase(); // deepseek | ollama | demo
 const DEMO_MODE = (process.env.DEMO_MODE || "false").toLowerCase() === "true";
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || "";
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "mistral";
 const MAX_FILE_MB = Number(process.env.MAX_FILE_MB || 30);
 const MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024;
 
@@ -52,6 +53,7 @@ console.log("PROVIDER:", PROVIDER);
 console.log("DEMO_MODE:", DEMO_MODE);
 console.log("DEEPSEEK KEY loaded?", !!DEEPSEEK_API_KEY);
 console.log("MAX_FILE_MB:", MAX_FILE_MB);
+console.log("OLLAMA_MODEL:", OLLAMA_MODEL);
 
 // ---- Upload ----
 const upload = multer({
@@ -60,6 +62,50 @@ const upload = multer({
 });
 
 // ---- Prompt ----
+function getTextTypeInstruction(textType, lang) {
+  const type = String(textType || "").toLowerCase();
+
+  if (type === "essay") {
+    return lang === "en"
+      ? "Evaluate whether the essay has a clear thesis, logical paragraph structure, balanced argumentation, and a strong conclusion."
+      : "Bewerte, ob der Essay eine klare Leitthese, einen logischen Absatzaufbau, eine ausgewogene Argumentation und ein starkes Fazit hat.";
+  }
+
+  if (type === "comment") {
+    return lang === "en"
+      ? "Evaluate whether the comment states a clear opinion, supports it convincingly, addresses the topic directly, and uses an appropriate style."
+      : "Bewerte, ob der Comment eine klare Meinung formuliert, diese überzeugend begründet, das Thema direkt aufgreift und stilistisch passend geschrieben ist.";
+  }
+
+  if (type === "analysis") {
+    return lang === "en"
+      ? "Evaluate whether the analysis explains methods, language, structure, and effects precisely instead of only retelling the content."
+      : "Bewerte, ob die Analysis sprachliche Mittel, Aufbau und Wirkung präzise untersucht und nicht nur den Inhalt nacherzählt.";
+  }
+
+  if (type === "erörterung") {
+    return lang === "de"
+      ? "Bewerte, ob die Erörterung eine klare Fragestellung hat, Argumente sinnvoll ordnet, Pro- und Contra-Aspekte abwägt und zu einem begründeten Urteil kommt."
+      : "Evaluate whether the discussion text has a clear question, structured arguments, balanced weighing of pros and cons, and a justified final judgement.";
+  }
+
+  if (type === "summary" || type === "zusammenfassung") {
+    return lang === "en"
+      ? "Evaluate whether the summary is objective, concise, complete regarding key points, and free from personal opinion or unnecessary details."
+      : "Bewerte, ob die Summary sachlich, knapp, vollständig in den Kernaussagen und frei von eigener Meinung oder unnötigen Details ist.";
+  }
+
+  if (type === "characterization" || type === "charakterisierung") {
+    return lang === "en"
+      ? "Evaluate whether the characterization presents the figure clearly, uses fitting textual evidence, explains traits precisely, and stays analytical instead of only retelling the plot."
+      : "Bewerte, ob die Charakterisierung die Figur klar darstellt, passende Textbelege nutzt, Eigenschaften präzise erklärt und analytisch statt nur nacherzählend bleibt.";
+  }
+
+  return lang === "en"
+    ? "Evaluate structure, clarity, coherence, and language quality according to the selected text type."
+    : "Bewerte Aufbau, Klarheit, Kohärenz und sprachliche Qualität passend zur ausgewählten Textart.";
+}
+
 function buildPrompt({ text, textType, level, lang }) {
   const languageInstruction =
     lang === "en"
@@ -76,6 +122,8 @@ function buildPrompt({ text, textType, level, lang }) {
       ? "Identify typical grammar issues and spelling issues. Do NOT correct the full text. Provide explanations/patterns and 3–6 bullet points each."
       : "Identifiziere typische Grammatik- und Rechtschreibprobleme. Korrigiere NICHT den gesamten Text. Nenne Muster/Erklärungen und jeweils 3–6 Stichpunkte.";
 
+  const textTypeInstruction = getTextTypeInstruction(textType, lang);
+
   return `
 You are a feedback coach for student writing.
 ${languageInstruction}
@@ -85,6 +133,7 @@ You must NOT assign grades (no numeric/letter grade).
 
 Target group/level: ${level}
 Text type: ${textType}
+Specific evaluation focus: ${textTypeInstruction}
 
 Return ONLY valid JSON with this schema:
 {
@@ -105,6 +154,7 @@ Rules:
 - "score" must be an integer 1..10
 - Each list must have 3–6 bullet points
 - Be concrete and actionable (structure, coherence, vocabulary, grammar, style)
+- ${textTypeInstruction}
 - ${languageIssuesInstruction}
 - Do NOT rewrite the whole text
 - If text is too short, explain what is missing and how to expand
